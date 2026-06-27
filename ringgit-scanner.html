@@ -356,19 +356,6 @@
     </section>
   </main>
 
-  <footer class="setup">
-    <details>
-      <summary>Setup: connect your trained model</summary>
-      <ol>
-        <li>Train in Teachable Machine with classes like <code>Duit Kertas - RM1</code>, <code>Duit Kertas - RM5</code>, etc. (exact names don't matter — the app extracts the RM number automatically).</li>
-        <li><strong>Export Model → Upload (shareable link)</strong> and copy the URL (e.g. <code>https://teachablemachine.withgoogle.com/models/XXXX/</code>), or download and put the files in a <code>my_model/</code> folder next to this HTML.</li>
-        <li>Paste your URL into <code>MODEL_URL</code> near the top of the script.</li>
-        <li>Serve over <code>https://</code> or <code>localhost</code> — browsers block camera on plain <code>http://</code>.</li>
-      </ol>
-    </details>
-  </footer>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 <script>
@@ -509,16 +496,16 @@
   async function openCamera() {
     await loadModel();
 
-    if (!webcam) {
-      webcam = new tmImage.Webcam(400, 400, false);
-      document.getElementById("webcam-container").appendChild(webcam.canvas);
-    }
-
+    // Always create a fresh webcam — setup() can't be reused on a stopped instance.
+    const container = document.getElementById("webcam-container");
+    container.innerHTML = "";
+    webcam = new tmImage.Webcam(400, 400, false);
     try {
       await webcam.setup({ facingMode: "environment" });
     } catch {
       await webcam.setup();
     }
+    container.appendChild(webcam.canvas);
     await webcam.play();
 
     // Keep the viewfinder alive (no predictions yet)
@@ -602,11 +589,17 @@
     resetBars();
     denomGrid.hidden = true;
 
+    // Remove the old canvas and create a fresh webcam — setup() can't be
+    // called again on a stopped instance so we always start from scratch.
+    const container = document.getElementById("webcam-container");
+    container.innerHTML = "";
+    webcam = new tmImage.Webcam(400, 400, false);
     try {
       await webcam.setup({ facingMode: "environment" });
     } catch {
       await webcam.setup();
     }
+    container.appendChild(webcam.canvas);
     await webcam.play();
 
     liveLoop = true;
